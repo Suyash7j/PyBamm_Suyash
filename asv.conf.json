@@ -4,10 +4,10 @@
   "version": 1,
 
   // The name of the project being benchmarked
-  "project": "PyBaMM",
+  "project": "pybamm",
 
   // The project's homepage
-  "project_url": "https://www.pybamm.org/",
+  "project_url": "https://pybamm.org/",
 
   // The URL or local path of the source code repository for the
   // project being benchmarked
@@ -23,12 +23,6 @@
   //
   // "install_command": ["in-dir={env_dir} python -mpip install {wheel_file}"],
   // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
-  "build_command": [
-    "/bin/rm -rf pybind11",
-    "/usr/bin/git clone --depth 1 --branch v2.6.2 https://github.com/pybind/pybind11.git",
-    "python setup.py build",
-    "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
-  ],
 
   // List of branches to benchmark. If not provided, defaults to "master"
   // (for git) or "default" (for mercurial).
@@ -87,7 +81,7 @@
       "sympy": [],
       "bpx": [],
       "tqdm": [],
-      "matplotlib": [],
+      "matplotlib": []
     },
     "env": {
       "LD_LIBRARY_PATH": "/home/runner/.local/lib"

@@ -92,8 +92,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install nox
-        run: python -m pip install nox
+      - name: Install nox and CMake
+        run: python -m pip install nox cmake
 
       - name: Cache pybamm-requires nox environment for GNU/Linux and macOS
         uses: actions/cache@v3
@@ -101,7 +101,6 @@ jobs:
         with:
           path: |
             # Repository files
-            ${{ github.workspace }}/pybind11/
             ${{ github.workspace }}/install_KLU_Sundials/
             # Headers and dynamic library files for SuiteSparse and SUNDIALS
             ${{ env.HOME }}/.local/lib/
@@ -150,15 +149,14 @@ jobs:
           python-version: 3.11
           cache: 'pip'
 
-      - name: Install nox
-        run: python -m pip install nox
+      - name: Install nox and CMake
+        run: python -m pip install nox cmake
 
       - name: Cache pybamm-requires nox environment for GNU/Linux
         uses: actions/cache@v3
         with:
           path: |
             # Repository files
-            ${{ github.workspace }}/pybind11/
             ${{ github.workspace }}/install_KLU_Sundials/
             # Headers and dynamic library files for SuiteSparse and SUNDIALS
             ${{ env.HOME }}/.local/lib/
@@ -231,8 +229,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install nox
-        run: python -m pip install nox
+      - name: Install nox and CMake
+        run: python -m pip install nox cmake
 
       - name: Cache pybamm-requires nox environment for GNU/Linux and macOS
         uses: actions/cache@v3
@@ -240,7 +238,6 @@ jobs:
         with:
           path: |
             # Repository files
-            ${{ github.workspace }}/pybind11/
             ${{ github.workspace }}/install_KLU_Sundials/
             # Headers and dynamic library files for SuiteSparse and SUNDIALS
             ${{ env.HOME }}/.local/lib/
@@ -331,15 +328,14 @@ jobs:
           python-version: 3.12
           cache: 'pip'
 
-      - name: Install nox
-        run: python -m pip install nox
+      - name: Install nox and CMake
+        run: python -m pip install nox cmake
 
       - name: Cache pybamm-requires nox environment for GNU/Linux
         uses: actions/cache@v3
         with:
           path: |
             # Repository files
-            ${{ github.workspace }}/pybind11/
             ${{ github.workspace }}/install_KLU_Sundials/
             # Headers and dynamic library files for SuiteSparse and SUNDIALS
             ${{ env.HOME }}/.local/lib/
@@ -386,15 +382,14 @@ jobs:
           python-version: 3.12
           cache: 'pip'
 
-      - name: Install nox
-        run: python -m pip install nox
+      - name: Install nox and CMake
+        run: python -m pip install nox cmake
 
       - name: Cache pybamm-requires nox environment for GNU/Linux
         uses: actions/cache@v3
         with:
           path: |
             # Repository files
-            ${{ github.workspace }}/pybind11/
             ${{ github.workspace }}/install_KLU_Sundials/
             # Headers and dynamic library files for SuiteSparse and SUNDIALS
             ${{ env.HOME }}/.local/lib/

@@ -22,6 +22,7 @@
 
 ## Optimizations
 
+- Added `pybind11` as a build-time dependency, therefore simplifying the installation process ([#3560](https://github.com/pybamm-team/PyBaMM/pull/3560))
 - Updated `jax` and `jaxlib` to the latest available versions and added Windows (Python 3.9+) support for the Jax solver ([#3550](https://github.com/pybamm-team/PyBaMM/pull/3550))
 
 ## Breaking changes
