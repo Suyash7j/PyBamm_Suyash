@@ -617,18 +617,51 @@ class ParticleLithiumIonParameters(BaseParameters):
         u_ref = pybamm.FunctionParameter(
             f"{self.phase_prefactor}{Domain} electrode {lithiation}OCP [V]", inputs
         )
+
+        dudt_func = self.dUdT(sto)
+        u_ref = u_ref + (T - self.main_param.T_ref) * dudt_func
+
         # add a term to ensure that the OCP goes to infinity at 0 and -infinity at 1
         # this will not affect the OCP for most values of sto
         # see #1435
-        u_ref = u_ref + 1e-6 * (1 / sto + 1 / (sto - 1))
-        dudt_func = self.dUdT(sto)
-        out = u_ref + (T - self.main_param.T_ref) * dudt_func
+        out = u_ref + 1e-6 * (1 / sto + 1 / (sto - 1))
 
         if self.domain == "negative":
             out.print_name = r"U_\mathrm{n}(c^\mathrm{surf}_\mathrm{s,n}, T)"
         elif self.domain == "positive":
             out.print_name = r"U_\mathrm{p}(c^\mathrm{surf}_\mathrm{s,p}, T)"
         return out
+
+    def dUdsto(self, sto, T, lithiation=None):
+        """
+        Dimensional derivative of the open-circuit potential with respect to the
+        stoichiometry [V]
+        """
+        domain, Domain = self.domain_Domain
+        tol = pybamm.settings.tolerances["U__c_s"]
+        sto = pybamm.maximum(pybamm.minimum(sto, 1 - tol), tol)
+        if lithiation is None:
+            lithiation = ""
+        else:
+            lithiation = lithiation + " "
+
+        u_ref = pybamm.FunctionParameter(
+            f"{self.phase_prefactor}{Domain} electrode {lithiation}OCP [V]",
+            {f"{self.phase_prefactor}{Domain} particle stoichiometry": sto},
+            diff_variable=sto,
+        )
+
+        dudt = pybamm.FunctionParameter(
+            f"{self.phase_prefactor}{Domain} electrode OCP entropic change [V.K-1]",
+            {
+                f"{Domain} particle stoichiometry": sto,
+                f"{self.phase_prefactor}Maximum {domain} particle "
+                "surface concentration [mol.m-3]": self.c_max,
+            },
+            diff_variable=sto,
+        )
+
+        return u_ref + (T - self.main_param.T_ref) * dudt
 
     def dUdT(self, sto):
         """

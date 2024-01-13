@@ -2,6 +2,7 @@
 # Base class for thermal effects
 #
 import pybamm
+import numpy as np
 
 
 class BaseThermal(pybamm.BaseSubModel):
@@ -16,8 +17,12 @@ class BaseThermal(pybamm.BaseSubModel):
         A dictionary of options to be passed to the model.
     """
 
-    def __init__(self, param, options=None):
+    def __init__(self, param, options=None, x_average=False):
         super().__init__(param, options=options)
+        self.x_average = x_average
+
+        if self.options["heat of mixing"] == "true":
+            pybamm.citations.register("Richardson2021")
 
     def _get_standard_fundamental_variables(self, T_dict):
         """
@@ -175,26 +180,35 @@ class BaseThermal(pybamm.BaseSubModel):
             Q_rev_n, pybamm.FullBroadcast(0, "separator", "current collector"), Q_rev_p
         )
 
+        # Heat of mixing
+        Q_mix_s_n, Q_mix_s_s, Q_mix_s_p = self._heat_of_mixing(variables)
+        Q_mix = pybamm.concatenation(Q_mix_s_n, Q_mix_s_s, Q_mix_s_p)
+
         # Total heating
-        Q = Q_ohm + Q_rxn + Q_rev
+        Q = Q_ohm + Q_rxn + Q_rev + Q_mix
 
         # Compute the X-average over the entire cell, including current collectors
         Q_ohm_av = self._x_average(Q_ohm, Q_ohm_s_cn, Q_ohm_s_cp)
         Q_rxn_av = self._x_average(Q_rxn, 0, 0)
         Q_rev_av = self._x_average(Q_rev, 0, 0)
         Q_av = self._x_average(Q, Q_ohm_s_cn, Q_ohm_s_cp)
+        Q_mix_av = self._x_average(Q_mix, 0, 0)
 
         # Compute volume-averaged heat source terms
         Q_ohm_vol_av = self._yz_average(Q_ohm_av)
         Q_rxn_vol_av = self._yz_average(Q_rxn_av)
         Q_rev_vol_av = self._yz_average(Q_rev_av)
         Q_vol_av = self._yz_average(Q_av)
+        Q_mix_vol_av = self._yz_average(Q_mix_av)
 
         variables.update(
             {
                 "Ohmic heating [W.m-3]": Q_ohm,
                 "X-averaged Ohmic heating [W.m-3]": Q_ohm_av,
                 "Volume-averaged Ohmic heating [W.m-3]": Q_ohm_vol_av,
+                "Heat of mixing [W.m-3]": Q_mix,
+                "X-averaged heat of mixing [W.m-3]": Q_mix_av,
+                "Volume-averaged heat of mixing [W.m-3]": Q_mix_vol_av,
                 "Irreversible electrochemical heating [W.m-3]": Q_rxn,
                 "X-averaged irreversible electrochemical heating [W.m-3]": Q_rxn_av,
                 "Volume-averaged irreversible electrochemical heating "
@@ -240,6 +254,74 @@ class BaseThermal(pybamm.BaseSubModel):
                 Q_s_cn = self.param.n.sigma_cc * pybamm.grad_squared(phi_s_cn)
                 Q_s_cp = self.param.p.sigma_cc * pybamm.grad_squared(phi_s_cp)
         return Q_s_cn, Q_s_cp
+
+    def _heat_of_mixing(self, variables):
+        """Compute heat of mixing source terms."""
+        param = self.param
+
+        if self.options["heat of mixing"] == "true":
+            F = pybamm.constants.F.value
+            pi = np.pi
+
+            # Compute heat of mixing in negative electrode
+            if self.options.electrode_types["negative"] == "planar":
+                Q_mix_s_n = pybamm.FullBroadcast(
+                    0, ["negative electrode"], "current collector"
+                )
+            else:
+                a_n = variables["Negative electrode surface area to volume ratio [m-1]"]
+                R_n = variables["Negative particle radius [m]"]
+                N_n = a_n / (4 * pi * R_n**2)
+                if self.x_average:
+                    c_n = variables[
+                        "X-averaged negative particle concentration [mol.m-3]"
+                    ]
+                    T_n = variables["X-averaged negative electrode temperature [K]"]
+                else:
+                    c_n = variables["Negative particle concentration [mol.m-3]"]
+                    T_n = variables["Negative electrode temperature [K]"]
+                T_n_part = pybamm.PrimaryBroadcast(T_n, ["negative particle"])
+                dc_n_dr2 = pybamm.inner(pybamm.grad(c_n), pybamm.grad(c_n))
+                D_n = param.n.prim.D(c_n, T_n_part)
+                dUeq_n = param.n.prim.dUdsto(c_n / param.n.prim.c_max, T_n_part)
+                integrand_r_n = D_n * dc_n_dr2 * dUeq_n / param.n.prim.c_max
+                integration_variable_r_n = [
+                    pybamm.SpatialVariable("r", domain=integrand_r_n.domain)
+                ]
+                integral_r_n = pybamm.Integral(integrand_r_n, integration_variable_r_n)
+                Q_mix_s_n = -F * N_n * integral_r_n
+
+            # Compute heat of mixing in positive electrode
+            a_p = variables["Positive electrode surface area to volume ratio [m-1]"]
+            R_p = variables["Positive particle radius [m]"]
+            N_p = a_p / (4 * pi * R_p**2)
+            if self.x_average:
+                c_p = variables["X-averaged positive particle concentration [mol.m-3]"]
+                T_p = variables["X-averaged positive electrode temperature [K]"]
+            else:
+                c_p = variables["Positive particle concentration [mol.m-3]"]
+                T_p = variables["Positive electrode temperature [K]"]
+            T_p_part = pybamm.PrimaryBroadcast(T_p, ["positive particle"])
+            dc_p_dr2 = pybamm.inner(pybamm.grad(c_p), pybamm.grad(c_p))
+            D_p = param.p.prim.D(c_p, T_p_part)
+            dUeq_p = param.p.prim.dUdsto(c_p / param.p.prim.c_max, T_p_part)
+            integrand_r_p = D_p * dc_p_dr2 * dUeq_p / param.p.prim.c_max
+            integration_variable_r_p = [
+                pybamm.SpatialVariable("r", domain=integrand_r_p.domain)
+            ]
+            integral_r_p = pybamm.Integral(integrand_r_p, integration_variable_r_p)
+            Q_mix_s_p = -F * N_p * integral_r_p
+            Q_mix_s_s = pybamm.FullBroadcast(0, ["separator"], "current collector")
+        else:
+            Q_mix_s_n = pybamm.FullBroadcast(
+                0, ["negative electrode"], "current collector"
+            )
+            Q_mix_s_p = pybamm.FullBroadcast(
+                0, ["positive electrode"], "current collector"
+            )
+            Q_mix_s_s = pybamm.FullBroadcast(0, ["separator"], "current collector")
+
+        return Q_mix_s_n, Q_mix_s_s, Q_mix_s_p
 
     def _x_average(self, var, var_cn, var_cp):
         """

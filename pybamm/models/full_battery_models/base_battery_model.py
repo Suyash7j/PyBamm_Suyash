@@ -239,6 +239,7 @@ class BatteryModelOptions(pybamm.FuzzyDict):
                 "integrated",
             ],
             "exchange-current density": ["single", "current sigmoid"],
+            "heat of mixing": ["false", "true"],
             "hydrolysis": ["false", "true"],
             "intercalation kinetics": [
                 "symmetric Butler-Volmer",
@@ -505,6 +506,11 @@ class BatteryModelOptions(pybamm.FuzzyDict):
 
         # Options not yet compatible with particle-size distributions
         if options["particle size"] == "distribution":
+            if options["heat of mixing"] != "false":
+                raise NotImplementedError(
+                    "Heat of mixing submodels do not yet support particle-size "
+                    "distributions."
+                )
             if options["lithium plating"] != "none":
                 raise NotImplementedError(
                     "Lithium plating submodels do not yet support particle-size "
@@ -1213,7 +1219,10 @@ class BaseBatteryModel(pybamm.BaseModel):
             if self.options["dimensionality"] == 0:
                 thermal_submodel = pybamm.thermal.pouch_cell.OneDimensionalX
 
-        self.submodels["thermal"] = thermal_submodel(self.param, self.options)
+        x_average = getattr(self, "x_average", False)
+        self.submodels["thermal"] = thermal_submodel(
+            self.param, self.options, x_average
+        )
 
     def set_current_collector_submodel(self):
         if self.options["current collector"] in ["uniform"]:
