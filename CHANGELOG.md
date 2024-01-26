@@ -19,6 +19,7 @@
 
 ## Features
 
+- Transport efficiency submodel has new options from the literature relating to different tortuosity factor models and also a new option called "tortuosity factor" for specifying the value or function directly as parameters ([#3437](https://github.com/pybamm-team/PyBaMM/pull/3437))
 - The `pybamm_install_odes` command now includes support for macOS systems and can be used to set up SUNDIALS and install the `scikits.odes` solver on macOS ([#3417](https://github.com/pybamm-team/PyBaMM/pull/3417), [#3706](https://github.com/pybamm-team/PyBaMM/3706]))
 - Added support for Python 3.12 ([#3531](https://github.com/pybamm-team/PyBaMM/pull/3531))
 - Added method to get QuickPlot axes by variable ([#3596](https://github.com/pybamm-team/PyBaMM/pull/3596))
