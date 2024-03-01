@@ -1,10 +1,14 @@
 #
 # Class for quick plotting of variables from models
 #
+from __future__ import annotations
+
 import os
-import numpy as np
-import pybamm
 from collections import defaultdict
+
+import numpy as np
+
+import pybamm
 from pybamm.util import have_optional_dependency
 
 
@@ -125,7 +129,7 @@ class QuickPlot:
         # Set colors, linestyles, figsize, axis limits
         # call LoopList to make sure list index never runs out
         if colors is None:
-            self.colors = LoopList(colors or ["r", "b", "k", "g", "m", "c"])
+            self.colors = LoopList(["r", "b", "k", "g", "m", "c"])
         else:
             self.colors = LoopList(colors)
         self.linestyles = LoopList(linestyles or ["-", ":", "--", "-."])

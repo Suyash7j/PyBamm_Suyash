@@ -1,16 +1,16 @@
-import pybamm
-import numpy as np
-import logging
-import warnings
-import numbers
+from __future__ import annotations
 
-from typing import Union
-from typing import List
-
-from functools import lru_cache
-
-import importlib.util
 import importlib
+import importlib.util
+import logging
+import numbers
+import warnings
+from functools import lru_cache
+from typing import Union
+
+import numpy as np
+
+import pybamm
 
 logger = logging.getLogger("pybamm.solvers.idaklu_jax")
 
@@ -27,9 +27,7 @@ if pybamm.have_jax():
     import jax
     from jax import lax
     from jax import numpy as jnp
-    from jax.interpreters import ad
-    from jax.interpreters import mlir
-    from jax.interpreters import batching
+    from jax.interpreters import ad, batching, mlir
     from jax.interpreters.mlir import custom_call
     from jax.lib import xla_client
     from jax.tree_util import tree_flatten
@@ -273,9 +271,9 @@ class IDAKLUJax:
 
     def jax_value(
         self,
-        t: np.ndarray = None,
-        inputs: Union[dict, None] = None,
-        output_variables: Union[List[str], None] = None,
+        t: np.ndarray | None = None,
+        inputs: dict | None = None,
+        output_variables: list[str] | None = None,
     ):
         """Helper function to compute the gradient of a jaxified expression
 
@@ -306,9 +304,9 @@ class IDAKLUJax:
 
     def jax_grad(
         self,
-        t: np.ndarray = None,
-        inputs: Union[dict, None] = None,
-        output_variables: Union[List[str], None] = None,
+        t: np.ndarray | None = None,
+        inputs: dict | None = None,
+        output_variables: list[str] | None = None,
     ):
         """Helper function to compute the gradient of a jaxified expression
 
@@ -489,7 +487,7 @@ class IDAKLUJax:
         if t.ndim == 0 or (t.ndim == 1 and t.shape[0] == 1):
             # scalar time input
             logger.debug("scalar time")
-            y_dot = jnp.zeros_like(t)
+            y_dot: jax.Array | np.ndarray = jnp.zeros_like(t)
             js = self._jaxify_solve(t, invar, *inputs)
             if js.ndim == 0:
                 js = jnp.array([js])

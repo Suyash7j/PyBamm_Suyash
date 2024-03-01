@@ -2,19 +2,19 @@
 # Binary operator classes
 #
 from __future__ import annotations
+
+import functools
 import numbers
+from typing import Callable, cast
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-import functools
 
 import pybamm
-from pybamm.util import have_optional_dependency
-
-from typing import Callable, cast
 
 # create type alias(s)
 from pybamm.type_definitions import ChildSymbol, ChildValue, Numeric
+from pybamm.util import have_optional_dependency
 
 
 def _preprocess_binary(
@@ -34,7 +34,7 @@ def _preprocess_binary(
         right = pybamm.Vector(right)
 
     # Check both left and right are pybamm Symbols
-    if not (isinstance(left, pybamm.Symbol) and isinstance(right, pybamm.Symbol)):
+    if not (isinstance(left, pybamm.Symbol) and isinstance(right, pybamm.Symbol)):  # type: ignore[redundant-expr]
         raise NotImplementedError(
             """BinaryOperator not implemented for symbols of type {} and {}""".format(
                 type(left), type(right)
