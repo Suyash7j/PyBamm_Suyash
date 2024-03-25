@@ -178,6 +178,7 @@ class Simulation:
 
     def set_up_and_parameterise_experiment(self):
         """
+        This is a helper function.
         Set up a simulation to run with an experiment. This creates a dictionary of
         inputs (current/voltage/power, running time, stopping condition) for each
         operating condition in the experiment. The model will then be solved by
@@ -186,6 +187,8 @@ class Simulation:
         This needs to be done here and not in the Experiment class because the nominal
         cell capacity (from the parameters) is used to convert C-rate to current.
         """
+        msg = "pybamm.simulation.set_up_and_parameterise_experiment is not meant to be accessed directly."
+        warn(msg, DeprecationWarning)
         # Update experiment using capacity
         capacity = self._parameter_values["Nominal cell capacity [A.h]"]
         for op_conds in self.experiment.operating_conditions_steps:
@@ -210,12 +213,15 @@ class Simulation:
 
     def set_up_and_parameterise_model_for_experiment(self):
         """
+        This is a helper function.
         Set up self._model to be able to run the experiment (new version).
         In this version, a new model is created for each step.
 
         This increases set-up time since several models to be processed, but
         reduces simulation time since the model formulation is efficient.
         """
+        msg = "pybamm.simulation.set_up_and_parameterise_model_for_experiment is not meant to be accessed directly."
+        warn(msg, DeprecationWarning)
         self.experiment_unique_steps_to_model = {}
         for op_number, op in enumerate(self.experiment.unique_steps):
             new_model = self._model.new_copy()
@@ -326,7 +332,8 @@ class Simulation:
         """
         A method to set the parameters in the model and the associated geometry.
         """
-
+        msg = "pybamm.set_paramters is meant to be accessed directly."
+        warn(msg, DeprecationWarning)
         if self.model_with_set_params:
             return
 
