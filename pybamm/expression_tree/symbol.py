@@ -7,8 +7,9 @@ import numbers
 import numpy as np
 import sympy
 from scipy.sparse import csr_matrix, issparse
-from functools import lru_cache, cached_property
-from typing import TYPE_CHECKING, Sequence, cast
+from functools import cached_property
+from typing import TYPE_CHECKING, cast
+from collections.abc import Sequence
 
 import pybamm
 from pybamm.util import import_optional_dependency
@@ -570,13 +571,7 @@ class Symbol:
 
     def __repr__(self):
         """returns the string `__class__(id, name, children, domain)`"""
-        return ("{!s}({}, {!s}, children={!s}, domains={!s})").format(
-            self.__class__.__name__,
-            hex(self.id),
-            self._name,
-            [str(child) for child in self.children],
-            {k: v for k, v in self.domains.items() if v != []},
-        )
+        return f"{self.__class__.__name__!s}({hex(self.id)}, {self._name!s}, children={[str(child) for child in self.children]!s}, domains={({k: v for k, v in self.domains.items() if v != []})!s})"
 
     def __add__(self, other: ChildSymbol) -> pybamm.Addition:
         """return an :class:`Addition` object."""
@@ -882,7 +877,7 @@ class Symbol:
                 return None
             raise pybamm.ShapeError(
                 f"Cannot find shape (original error: {error})"
-            )  # pragma: no cover
+            ) from error  # pragma: no cover
         return result
 
     def evaluates_to_number(self):
@@ -901,7 +896,6 @@ class Symbol:
     def evaluates_to_constant_number(self):
         return self.evaluates_to_number() and self.is_constant()
 
-    @lru_cache
     def evaluates_on_edges(self, dimension: str) -> bool:
         """
         Returns True if a symbol evaluates on an edge, i.e. symbol contains a gradient
@@ -920,9 +914,12 @@ class Symbol:
             Whether the symbol evaluates on edges (in the finite volume discretisation
             sense)
         """
-        eval_on_edges = self._evaluates_on_edges(dimension)
-        self._saved_evaluates_on_edges[dimension] = eval_on_edges
-        return eval_on_edges
+        if dimension not in self._saved_evaluates_on_edges:
+            self._saved_evaluates_on_edges[dimension] = self._evaluates_on_edges(
+                dimension
+            )
+
+        return self._saved_evaluates_on_edges[dimension]
 
     def _evaluates_on_edges(self, dimension):
         # Default behaviour: return False
@@ -1046,7 +1043,7 @@ class Symbol:
         try:
             self.shape_for_testing
         except ValueError as e:
-            raise pybamm.ShapeError(f"Cannot find shape (original error: {e})")
+            raise pybamm.ShapeError(f"Cannot find shape (original error: {e})") from e
 
     @property
     def print_name(self):

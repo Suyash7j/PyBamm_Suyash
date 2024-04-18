@@ -24,6 +24,8 @@ class UnaryOperator(pybamm.Symbol):
         name of the node
     child : :class:`Symbol`
         child node
+    domains : dict
+        A dictionary equivalent to {'primary': domain, auxiliary_domains}.
     """
 
     def __init__(
@@ -407,6 +409,8 @@ class SpatialOperator(UnaryOperator):
         name of the node
     child : :class:`Symbol`
         child node
+    domains : dict
+        A dictionary equivalent to {'primary': domain, auxiliary_domains}.
     """
 
     def __init__(
@@ -766,9 +770,7 @@ class BackwardIndefiniteIntegral(BaseIndefiniteIntegral):
     def __init__(self, child, integration_variable):
         super().__init__(child, integration_variable)
         # Overwrite the name
-        self.name = "{} integrated backward w.r.t {}".format(
-            child.name, self.integration_variable[0].name
-        )
+        self.name = f"{child.name} integrated backward w.r.t {self.integration_variable[0].name}"
         if isinstance(integration_variable, pybamm.SpatialVariable):
             self.name += f" on {self.integration_variable[0].domain}"
 

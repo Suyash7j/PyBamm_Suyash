@@ -18,12 +18,7 @@ class ScikitFiniteElement(pybamm.SpatialMethod):
     solving the Poisson problem -grad^2 u = f in the y-z plane (i.e. not the
     through-cell direction).
 
-    For broadcast we follow the default behaviour from SpatialMethod.
-
-    Parameters
-    ----------
-    mesh : :class:`pybamm.Mesh`
-        Contains all the submeshes for discretisation
+    For broadcast, we follow the default behaviour from SpatialMethod.
     """
 
     def __init__(self, options=None):
@@ -275,10 +270,10 @@ class ScikitFiniteElement(pybamm.SpatialMethod):
         try:
             _, neg_bc_type = boundary_conditions[symbol]["negative tab"]
             _, pos_bc_type = boundary_conditions[symbol]["positive tab"]
-        except KeyError:
+        except KeyError as error:
             raise pybamm.ModelError(
                 f"No boundary conditions provided for symbol `{symbol}``"
-            )
+            ) from error
 
         # adjust matrix for Dirichlet boundary conditions
         if neg_bc_type == "Dirichlet":
@@ -305,9 +300,9 @@ class ScikitFiniteElement(pybamm.SpatialMethod):
         the entire domain
 
         .. math::
-            I = \\int_{\Omega}\\!f(s)\\,dx
+            I = \\int_{\\Omega}\\!f(s)\\,dx
 
-        for where :math:`\Omega` is the domain.
+        for where :math:`\\Omega` is the domain.
 
         Parameters
         ----------
@@ -533,14 +528,14 @@ class ScikitFiniteElement(pybamm.SpatialMethod):
 
     def bc_apply(self, M, boundary, zero=False):
         """
-        Adjusts the assemled finite element matrices to account for boundary conditons.
+        Adjusts the assembled finite element matrices to account for boundary conditions.
 
         Parameters
         ----------
         M: :class:`scipy.sparse.coo_matrix`
-            The assemled finite element matrix to adjust.
+            The assembled finite element matrix to adjust.
         boundary: :class:`numpy.array`
-            Array of the indicies which correspond to the boundary.
+            Array of the indices which correspond to the boundary.
         zero: bool, optional
             If True, the rows of M given by the indicies in boundary are set to zero.
             If False, the diagonal element is set to one. default is False.

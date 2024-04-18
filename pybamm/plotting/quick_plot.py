@@ -116,9 +116,7 @@ class QuickPlot:
         else:
             if len(labels) != len(models):
                 raise ValueError(
-                    "labels '{}' have different length to models '{}'".format(
-                        labels, [model.name for model in models]
-                    )
+                    f"labels '{labels}' have different length to models '{[model.name for model in models]}'"
                 )
             self.labels = labels
 
@@ -162,7 +160,7 @@ class QuickPlot:
             self.spatial_unit = "mm"
         elif spatial_unit == "um":  # micrometers
             self.spatial_factor = 1e6
-            self.spatial_unit = "$\mu$m"
+            self.spatial_unit = r"$\mu$m"
         else:
             raise ValueError(f"spatial unit '{spatial_unit}' not recognized")
 
@@ -224,10 +222,10 @@ class QuickPlot:
                 except KeyError:
                     # if variable_tuple is not provided, default to "fixed"
                     self.variable_limits[variable_tuple] = "fixed"
-                except TypeError:
+                except TypeError as error:
                     raise TypeError(
                         "variable_limits must be 'fixed', 'tight', or a dict"
-                    )
+                    ) from error
 
         self.set_output_variables(output_variable_tuples, solutions)
         self.reset_axis()
@@ -297,12 +295,7 @@ class QuickPlot:
                 if variable.domain != domain:
                     raise ValueError(
                         "Mismatching variable domains. "
-                        "'{}' has domain '{}', but '{}' has domain '{}'".format(
-                            variable_tuple[0],
-                            domain,
-                            variable_tuple[idx],
-                            variable.domain,
-                        )
+                        f"'{variable_tuple[0]}' has domain '{domain}', but '{variable_tuple[idx]}' has domain '{variable.domain}'"
                     )
                 self.spatial_variable_dict[variable_tuple] = {}
 
@@ -471,6 +464,9 @@ class QuickPlot:
         ----------
         t : float
             Dimensional time (in 'time_units') at which to plot.
+        dynamic : bool, optional
+            If True, creates a dynamic plot with a slider.
+
         """
 
         plt = import_optional_dependency("matplotlib.pyplot")
@@ -654,7 +650,7 @@ class QuickPlot:
 
         Parameters
         ----------
-        step : float
+        step : float, optional
             For notebook mode, size of steps to allow in the slider. Defaults to 1/100th
             of the total time.
         show_plot : bool, optional
@@ -771,11 +767,11 @@ class QuickPlot:
 
         Parameters
         ----------
-        number_of_images : int (optional)
+        number_of_images : int, optional
             Number of images/plots to be compiled for a GIF.
-        duration : float (optional)
+        duration : float, optional
             Duration of visibility of a single image/plot in the created GIF.
-        output_filename : str (optional)
+        output_filename : str, optional
             Name of the generated GIF file.
 
         """
