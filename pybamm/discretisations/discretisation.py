@@ -754,7 +754,9 @@ class Discretisation:
             disc_right = self.process_symbol(right)
             if symbol.domain == []:
                 return pybamm.simplify_if_constant(
-                    symbol._binary_new_copy(disc_left, disc_right)
+                    symbol.new_copy(new_children=[disc_left, disc_right]).evaluate(
+                        evaluate_children=False
+                    )
                 )
             else:
                 return spatial_method.process_binary_operators(

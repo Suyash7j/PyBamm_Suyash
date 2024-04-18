@@ -1260,7 +1260,11 @@ def div(symbol):
     elif isinstance(symbol, (pybamm.Multiplication, pybamm.Division)):
         left, right = symbol.orphans
         if isinstance(left, pybamm.Negate):
-            return -div(symbol._binary_new_copy(left.orphans[0], right))
+            return -div(
+                symbol.new_copy(new_children=[left.orphans[0], right]).evaluate(
+                    evaluate_children=False
+                )
+            )
         # elif isinstance(right, pybamm.Negate):
         #     return -div(symbol._binary_new_copy(left, right.orphans[0]))
 

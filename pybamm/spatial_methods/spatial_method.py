@@ -450,7 +450,9 @@ class SpatialMethod:
             Discretised binary operator
 
         """
-        return bin_op._binary_new_copy(disc_left, disc_right)
+        return bin_op.new_copy(new_children=[disc_left, disc_right]).evaluate(
+            evaluate_children=False
+        )
 
     def concatenation(self, disc_children):
         """Discrete concatenation object.

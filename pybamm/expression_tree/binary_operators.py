@@ -113,9 +113,7 @@ class BinaryOperator(pybamm.Symbol):
             right_str = f"{self.right!s}"
         return f"{left_str} {self.name} {right_str}"
 
-    def create_copy(
-        self, new_children: list[pybamm.Symbol, pybamm.Symbol] | None = None
-    ):
+    def create_copy(self, new_children: list[pybamm.Symbol] | None = None):
         """See :meth:`pybamm.Symbol.new_copy()`."""
 
         # process children
@@ -129,19 +127,18 @@ class BinaryOperator(pybamm.Symbol):
                 )
             new_left, new_right = new_children
 
-        # make new symbol, ensure domain(s) remain the same
-        out = self._binary_new_copy(new_left, new_right)
+        out = self.__class__(new_left, new_right)
         out.copy_domains(self)
 
         return out
 
-    def _binary_new_copy(self, left: ChildSymbol, right: ChildSymbol):
-        """
-        Default behaviour for new_copy.
-        This copies the behaviour of `_binary_evaluate`, but since `left` and `right`
-        are symbols creates a new symbol instead of returning a value.
-        """
-        return self._binary_evaluate(left, right)
+    # def _binary_new_copy(self, left: ChildSymbol, right: ChildSymbol):
+    #     """
+    #     Default behaviour for new_copy.
+    #     This copies the behaviour of `_binary_evaluate`, but since `left` and `right`
+    #     are symbols creates a new symbol instead of returning a value.
+    #     """
+    #     return self._binary_evaluate(left, right)
 
     def evaluate(
         self,
@@ -149,10 +146,15 @@ class BinaryOperator(pybamm.Symbol):
         y: np.ndarray | None = None,
         y_dot: np.ndarray | None = None,
         inputs: dict | str | None = None,
+        evaluate_children: bool = True,
     ):
         """See :meth:`pybamm.Symbol.evaluate()`."""
-        left = self.left.evaluate(t, y, y_dot, inputs)
-        right = self.right.evaluate(t, y, y_dot, inputs)
+        if evaluate_children:
+            left = self.left.evaluate(t, y, y_dot, inputs)
+            right = self.right.evaluate(t, y, y_dot, inputs)
+        else:
+            left = self.left
+            right = self.right
         return self._binary_evaluate(left, right)
 
     def _evaluate_for_shape(self):
@@ -488,13 +490,13 @@ class Inner(BinaryOperator):
         else:
             return left * right
 
-    def _binary_new_copy(
-        self,
-        left: ChildSymbol,
-        right: ChildSymbol,
-    ):
-        """See :meth:`pybamm.BinaryOperator._binary_new_copy()`."""
-        return pybamm.inner(left, right)
+    # def _binary_new_copy(
+    #     self,
+    #     left: ChildSymbol,
+    #     right: ChildSymbol,
+    # ):
+    #     """See :meth:`pybamm.BinaryOperator._binary_new_copy()`."""
+    #     return pybamm.inner(left, right)
 
     def _evaluates_on_edges(self, dimension: str) -> bool:
         """See :meth:`pybamm.Symbol._evaluates_on_edges()`."""
@@ -557,13 +559,13 @@ class Equality(BinaryOperator):
         else:
             return int(left == right)
 
-    def _binary_new_copy(
-        self,
-        left: ChildSymbol,
-        right: ChildSymbol,
-    ):
-        """See :meth:`pybamm.BinaryOperator._binary_new_copy()`."""
-        return pybamm.Equality(left, right)
+    # def _binary_new_copy(
+    #     self,
+    #     left: ChildSymbol,
+    #     right: ChildSymbol,
+    # ):
+    #     """See :meth:`pybamm.BinaryOperator._binary_new_copy()`."""
+    #     return pybamm.Equality(left, right)
 
 
 class _Heaviside(BinaryOperator):
@@ -732,13 +734,13 @@ class Minimum(BinaryOperator):
         # don't raise RuntimeWarning for NaNs
         return np.minimum(left, right)
 
-    def _binary_new_copy(
-        self,
-        left: ChildSymbol,
-        right: ChildSymbol,
-    ):
-        """See :meth:`pybamm.BinaryOperator._binary_new_copy()`."""
-        return pybamm.minimum(left, right)
+    # def _binary_new_copy(
+    #     self,
+    #     left: ChildSymbol,
+    #     right: ChildSymbol,
+    # ):
+    #     """See :meth:`pybamm.BinaryOperator._binary_new_copy()`."""
+    #     return pybamm.minimum(left, right)
 
     def _sympy_operator(self, left, right):
         """Override :meth:`pybamm.BinaryOperator._sympy_operator`"""
@@ -776,13 +778,13 @@ class Maximum(BinaryOperator):
         # don't raise RuntimeWarning for NaNs
         return np.maximum(left, right)
 
-    def _binary_new_copy(
-        self,
-        left: ChildSymbol,
-        right: ChildSymbol,
-    ):
-        """See :meth:`pybamm.BinaryOperator._binary_new_copy()`."""
-        return pybamm.maximum(left, right)
+    # def _binary_new_copy(
+    #     self,
+    #     left: ChildSymbol,
+    #     right: ChildSymbol,
+    # ):
+    #     """See :meth:`pybamm.BinaryOperator._binary_new_copy()`."""
+    #     return pybamm.maximum(left, right)
 
     def _sympy_operator(self, left, right):
         """Override :meth:`pybamm.BinaryOperator._sympy_operator`"""
@@ -983,7 +985,9 @@ def add(left: ChildSymbol, right: ChildSymbol):
         if isinstance(right, (Addition, Subtraction)) and right.left.is_constant():
             # Simplify a + (b +- c) to (a + b) +- c if (a + b) is constant
             r_left, r_right = right.orphans
-            return right._binary_new_copy(left + r_left, r_right)
+            return right.new_copy(new_children=[left + r_left, r_right]).evaluate(
+                evaluate_children=False
+            )
     if isinstance(left, Subtraction):
         if right == left.right:
             # Simplify (a - b) + b to a
@@ -1056,7 +1060,9 @@ def subtract(
         if isinstance(right, (Addition, Subtraction)) and right.left.is_constant():
             # Simplify a - (b +- c) to (a - b) -+ c if (a - b) is constant
             r_left, r_right = right.orphans
-            return right._binary_new_copy(left - r_left, -r_right)
+            return right.new_copy(new_children=[left - r_left, -r_right]).evaluate(
+                evaluate_children=False
+            )
     elif isinstance(left, Addition):
         if right == left.right:
             # Simplify (b + a) - a to b

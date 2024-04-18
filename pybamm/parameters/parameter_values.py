@@ -736,11 +736,16 @@ class ParameterValues:
                     new_symbol.position = new_symbol_position
             return new_symbol
 
-        # Functions, Concatenations & BinaryOperators
-        elif (
-            isinstance(symbol, pybamm.Function)
-            or isinstance(symbol, pybamm.Concatenation)
-            or isinstance(symbol, pybamm.BinaryOperator)
+        # BinaryOperators
+        elif isinstance(symbol, pybamm.BinaryOperator):
+            new_children = [self.process_symbol(child) for child in symbol.children]
+            if isinstance(symbol, pybamm.Inner):
+                return symbol.create_copy(new_children)
+            return symbol.create_copy(new_children).evaluate(evaluate_children=False)
+
+        # Functions & Concatenations (PL: was combined with binaryOperators)
+        elif isinstance(symbol, pybamm.Function) or isinstance(
+            symbol, pybamm.Concatenation
         ):
             new_children = [self.process_symbol(child) for child in symbol.children]
             return symbol.create_copy(new_children)

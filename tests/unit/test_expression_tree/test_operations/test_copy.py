@@ -206,6 +206,26 @@ class TestCopy(TestCase):
         with self.assertRaisesRegex(ValueError, "must have exactly two children"):
             (a + b).new_copy(new_children=[a])
 
+    def test_binary_new_copy_new_children_scalars(self):
+        a = pybamm.Scalar(2)
+        b = pybamm.Scalar(5)
+
+        self.assertEqual((a + b).new_copy(), a + b)
+        # a+b produces a scalar, not an addition object.
+        with self.assertRaisesRegex(
+            ValueError, "Cannot create a copy of a scalar with new children"
+        ):
+            (a + b).new_copy(new_children=[a, b])
+
+        self.assertEqual(pybamm.Addition(a, b).new_copy(), pybamm.Addition(a, b))
+
+        c = pybamm.Scalar(4)
+        d = pybamm.Scalar(8)
+
+        self.assertEqual(
+            pybamm.Addition(a, b).new_copy(new_children=[c, d]), pybamm.Addition(c, d)
+        )
+
     def test_unary_new_copy_new_children_error(self):
         vec = pybamm.Vector([1, 2, 3, 4, 5])
         vec_b = pybamm.Vector([6, 7, 8, 9, 10])
