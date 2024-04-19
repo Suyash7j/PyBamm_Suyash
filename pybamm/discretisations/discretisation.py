@@ -758,7 +758,9 @@ class Discretisation:
             disc_right = self.process_symbol(right)
             if symbol.domain == []:
                 return pybamm.simplify_if_constant(
-                    symbol._binary_new_copy(disc_left, disc_right)
+                    symbol.new_copy(new_children=[disc_left, disc_right]).evaluate(
+                        evaluate_children=False
+                    )
                 )
             else:
                 return spatial_method.process_binary_operators(
@@ -874,7 +876,7 @@ class Discretisation:
 
         elif isinstance(symbol, pybamm.Function):
             disc_children = [self.process_symbol(child) for child in symbol.children]
-            return symbol._function_new_copy(disc_children)
+            return symbol.new_copy(disc_children)
 
         elif isinstance(symbol, pybamm.VariableDot):
             # Add symbol's reference and multiply by the symbol's scale

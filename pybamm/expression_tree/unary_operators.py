@@ -60,10 +60,17 @@ class UnaryOperator(pybamm.Symbol):
         """See :meth:`pybamm.Symbol.__str__()`."""
         return f"{self.name}({self.child!s})"
 
-    def create_copy(self):
+    def create_copy(self, new_children: list[pybamm.Symbol] | None = None):
         """See :meth:`pybamm.Symbol.new_copy()`."""
-        new_child = self.child.new_copy()
-        return self._unary_new_copy(new_child)
+        if new_children and len(new_children) > 1:
+            raise ValueError(
+                f"Unary operator of type {type(self)} must have exactly one child."
+            )
+        child = self._children_for_copying(new_children)[0]
+
+        new_symbol = self._unary_new_copy(child)
+        new_symbol.copy_domains(self)
+        return new_symbol
 
     def _unary_new_copy(self, child):
         """Make a new copy of the unary operator, with child `child`"""
@@ -144,7 +151,12 @@ class Negate(UnaryOperator):
         return -child
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the overridden :meth:`__neg__` to cover scenarios where the child
+        is some specific symbol types.
+        """
         return -child
 
 
@@ -170,7 +182,12 @@ class AbsoluteValue(UnaryOperator):
         return np.abs(child)
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the overridden :meth:`__abs__` to cover scenarios where the child
+        is some specific symbol types.
+        """
         return abs(child)
 
 
@@ -204,7 +221,12 @@ class Sign(UnaryOperator):
                 return np.sign(child)
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the convenience function :meth:`sign` to cover scenarios where the child is
+        a concatenation or broadcast, and simplifies the symbol.
+        """
         return sign(child)
 
 
@@ -449,7 +471,12 @@ class Gradient(SpatialOperator):
         return True
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the convenience function :meth:`grad` to cover scenarios where the gradient
+        is zero, or the child is a broadcast object.
+        """
         return grad(child)
 
     def _sympy_operator(self, child):
@@ -485,7 +512,12 @@ class Divergence(SpatialOperator):
         return False
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the convenience function :meth:`div` to cover scenarios where divergence is
+        0 or interacts with other functions.
+        """
         return div(child)
 
     def _sympy_operator(self, child):
@@ -994,7 +1026,12 @@ class BoundaryValue(BoundaryOperator):
         super().__init__("boundary value", child, side)
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the convenience function :meth:`boundary_value` to perform checks before
+        creating a BoundaryValue object.
+        """
         return boundary_value(child, self.side)
 
     def _sympy_operator(self, child):
@@ -1251,9 +1288,11 @@ def div(symbol):
     elif isinstance(symbol, (pybamm.Multiplication, pybamm.Division)):
         left, right = symbol.orphans
         if isinstance(left, pybamm.Negate):
-            return -div(symbol._binary_new_copy(left.orphans[0], right))
-        # elif isinstance(right, pybamm.Negate):
-        #     return -div(symbol._binary_new_copy(left, right.orphans[0]))
+            return -div(
+                symbol.new_copy(new_children=[left.orphans[0], right]).evaluate(
+                    evaluate_children=False
+                )
+            )
 
     # Last resort
     return Divergence(symbol)

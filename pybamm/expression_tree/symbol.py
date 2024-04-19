@@ -952,21 +952,29 @@ class Symbol:
         """
         return pybamm.CasadiConverter(casadi_symbols).convert(self, t, y, y_dot, inputs)
 
-    def create_copy(self):
+    def _children_for_copying(self, children: list[Symbol] | None = None) -> Symbol:
+        """
+        Gets existing children for a symbol being copied if they aren't provided.
+        """
+        if children is None:
+            children = [child.create_copy() for child in self.children]
+        return children
+
+    def create_copy(self, new_children: list[pybamm.Symbol] | None = None):
         """
         Make a new copy of a symbol, to avoid Tree corruption errors while bypassing
         copy.deepcopy(), which is slow.
         """
-        raise NotImplementedError(
-            f"""method self.new_copy() not implemented
-            for symbol {self!s} of type {type(self)}"""
-        )
+        children = self._children_for_copying(new_children)
+        return self.__class__(self.name, children, domains=self.domains)
 
-    def new_copy(self):
+    def new_copy(self, new_children: list[Symbol] | None = None):
         """
         Returns `create_copy` with added attributes
+
+        Optionally gives the copied symbol new children.
         """
-        obj = self.create_copy()
+        obj = self.create_copy(new_children)
         obj._print_name = self.print_name
         return obj
 
