@@ -62,15 +62,13 @@ class UnaryOperator(pybamm.Symbol):
 
     def create_copy(self, new_children: list[pybamm.Symbol] | None = None):
         """See :meth:`pybamm.Symbol.new_copy()`."""
-        if new_children is None:
-            new_child = self.child.new_copy()
-        else:
-            if len(new_children) > 1:
-                raise ValueError(
-                    f"Unary operator of type {type(self)} must have exactly one child."
-                )
-            new_child = new_children[0]
-        new_symbol = self._unary_new_copy(new_child)
+        if new_children and len(new_children) > 1:
+            raise ValueError(
+                f"Unary operator of type {type(self)} must have exactly one child."
+            )
+        child = self._children_for_copying(new_children)[0]
+
+        new_symbol = self._unary_new_copy(child)
         new_symbol.copy_domains(self)
         return new_symbol
 

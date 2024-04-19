@@ -137,9 +137,8 @@ class Concatenation(pybamm.Symbol):
 
     def create_copy(self, new_children: list[pybamm.Symbol] | None = None):
         """See :meth:`pybamm.Symbol.new_copy()`."""
-        if new_children is None:
-            new_children = [child.new_copy() for child in self.children]
-        return self.__class__(*new_children)
+        children = self._children_for_copying(new_children)
+        return self.__class__(*children)
 
     # def _concatenation_new_copy(self, children):
     #     """See :meth:`pybamm.Symbol.new_copy()`."""
@@ -389,9 +388,8 @@ class DomainConcatenation(Concatenation):
 
     def create_copy(self, new_children: list[pybamm.Symbol] | None = None):
         """See :meth:`pybamm.Symbol.new_copy()`."""
-        if new_children is None:
-            new_children = [child.new_copy() for child in self.children]
-        return self.__class__(new_children, self.full_mesh, copy_this=self)
+        children = self._children_for_copying(new_children)
+        return self.__class__(children, self.full_mesh, copy_this=self)
 
     def to_json(self):
         """

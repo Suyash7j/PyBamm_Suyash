@@ -116,18 +116,13 @@ class BinaryOperator(pybamm.Symbol):
     def create_copy(self, new_children: list[pybamm.Symbol] | None = None):
         """See :meth:`pybamm.Symbol.new_copy()`."""
 
-        # process children
-        if new_children is None:
-            new_left = self.left.new_copy()
-            new_right = self.right.new_copy()
-        else:
-            if len(new_children) != 2:
-                raise ValueError(
-                    f"Symbol of type {type(self)} must have exactly two children."
-                )
-            new_left, new_right = new_children
+        if new_children and len(new_children) != 2:
+            raise ValueError(
+                f"Symbol of type {type(self)} must have exactly two children."
+            )
+        children = self._children_for_copying(new_children)
 
-        out = self.__class__(new_left, new_right)
+        out = self.__class__(children[0], children[1])
         out.copy_domains(self)
 
         return out
