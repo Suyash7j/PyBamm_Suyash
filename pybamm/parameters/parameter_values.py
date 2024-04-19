@@ -739,7 +739,12 @@ class ParameterValues:
         # BinaryOperators
         elif isinstance(symbol, pybamm.BinaryOperator):
             new_children = [self.process_symbol(child) for child in symbol.children]
-            if isinstance(symbol, pybamm.Inner):
+            if (
+                isinstance(symbol, pybamm.Inner)
+                or isinstance(symbol, pybamm.Equality)
+                or isinstance(symbol, pybamm.Minimum)
+                or isinstance(symbol, pybamm.Maximum)
+            ):
                 return symbol.create_copy(new_children)
             return symbol.create_copy(new_children).evaluate(evaluate_children=False)
 
