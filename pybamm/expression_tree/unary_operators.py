@@ -151,7 +151,12 @@ class Negate(UnaryOperator):
         return -child
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the overridden :meth:`__neg__` to cover scenarios where the child
+        is some specific symbol types.
+        """
         return -child
 
 
@@ -177,7 +182,12 @@ class AbsoluteValue(UnaryOperator):
         return np.abs(child)
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the overridden :meth:`__abs__` to cover scenarios where the child
+        is some specific symbol types.
+        """
         return abs(child)
 
 
@@ -211,7 +221,12 @@ class Sign(UnaryOperator):
                 return np.sign(child)
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the convenience function :meth:`sign` to cover scenarios where the child is
+        a concatenation or broadcast, and simplifies the symbol.
+        """
         return sign(child)
 
 
@@ -456,7 +471,12 @@ class Gradient(SpatialOperator):
         return True
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the convenience function :meth:`grad` to cover scenarios where the gradient
+        is zero, or the child is a broadcast object.
+        """
         return grad(child)
 
     def _sympy_operator(self, child):
@@ -492,7 +512,12 @@ class Divergence(SpatialOperator):
         return False
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the convenience function :meth:`div` to cover scenarios where divergence is
+        0 or interacts with other functions.
+        """
         return div(child)
 
     def _sympy_operator(self, child):
@@ -1001,7 +1026,12 @@ class BoundaryValue(BoundaryOperator):
         super().__init__("boundary value", child, side)
 
     def _unary_new_copy(self, child):
-        """See :meth:`UnaryOperator._unary_new_copy()`."""
+        """
+        Creates a new copy of the operator with the child `child`.
+
+        Uses the convenience function :meth:`boundary_value` to perform checks before
+        creating a BoundaryValue object.
+        """
         return boundary_value(child, self.side)
 
     def _sympy_operator(self, child):
@@ -1263,8 +1293,6 @@ def div(symbol):
                     evaluate_children=False
                 )
             )
-        # elif isinstance(right, pybamm.Negate):
-        #     return -div(symbol._binary_new_copy(left, right.orphans[0]))
 
     # Last resort
     return Divergence(symbol)
