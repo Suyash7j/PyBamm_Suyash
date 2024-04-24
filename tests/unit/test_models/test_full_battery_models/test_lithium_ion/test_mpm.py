@@ -116,6 +116,13 @@ class TestMPM(TestCase):
         model = pybamm.lithium_ion.MPM(options)
         model.check_well_posedness()
 
+    def test_dchs_ocp(self):
+        options = {
+            "open-circuit potential": "DCHS",
+        }
+        model = pybamm.lithium_ion.MPM(options)
+        model.check_well_posedness()
+
 
 class TestMPMExternalCircuits(TestCase):
     def test_well_posed_voltage(self):
